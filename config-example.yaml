@@ -1,0 +1,181 @@
+# Static Mihomo / Clash Verge profile.
+#
+# You normally do NOT need this file: import the hosted
+# https://YOUR_CLOUDFLARE_HOST/config.yaml?token=YOUR_ACCESS_TOKEN instead,
+# which generates the same profile and applies your options for you.
+#
+# Use this file if you want to keep the profile locally and edit it by hand.
+# Replace YOUR_CLOUDFLARE_HOST and YOUR_ACCESS_TOKEN in proxy-providers below,
+# and uncomment the optional blocks (Tailscale, custom DNS, Apple Intelligence)
+# you want.
+
+mode: rule
+mixed-port: 7897
+allow-lan: false
+log-level: info
+ipv6: true
+external-controller: ''
+secret: set-your-secret
+unified-delay: true
+
+external-controller-cors:
+  allow-private-network: true
+  allow-origins:
+    - tauri://localhost
+    - http://tauri.localhost
+    - https://yacd.metacubex.one
+    - https://metacubex.github.io
+    - https://board.zash.run.place
+
+tun:
+  enable: false
+  stack: gvisor
+  auto-route: true
+  strict-route: false
+  auto-detect-interface: true
+  dns-hijack:
+    - any:53
+  # OPTIONAL (Tailscale): leave the tailnet to the Tailscale app running alongside.
+  # route-exclude-address:
+  #   - 100.64.0.0/10
+  #   - fd7a:115c:a1e0::/48
+
+external-controller-pipe: \\.\pipe\verge-mihomo
+
+dns:
+  enable: true
+  listen: 127.0.0.1:1053
+  ipv6: true
+  respect-rules: false
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  # OPTIONAL (Tailscale): keep MagicDNS names out of fake-ip.
+  # fake-ip-filter:
+  #   - "+.ts.net"
+  default-nameserver:
+    - 1.1.1.1
+    - 8.8.8.8
+  # OPTIONAL (custom DNS): replace both resolvers below, and every resolver in
+  # nameserver-policy, with your own, e.g. "https://dns.nextdns.io/<profile-id>/<device-name>".
+  # Keep the "#Anthropic" suffix in nameserver-policy.
+  nameserver:
+    - "https://cloudflare-dns.com/dns-query"
+    - "https://dns.google/dns-query"
+  proxy-server-nameserver:
+    - "https://cloudflare-dns.com/dns-query"
+    - "https://dns.google/dns-query"
+  # Resolve Claude's domains through the Anthropic proxy group.
+  nameserver-policy:
+    "geosite:anthropic":
+      - "https://cloudflare-dns.com/dns-query#Anthropic"
+      - "https://dns.google/dns-query#Anthropic"
+    "anthropic.com.cdn.cloudflare.net":
+      - "https://cloudflare-dns.com/dns-query#Anthropic"
+      - "https://dns.google/dns-query#Anthropic"
+    "anthropic.auth0.com":
+      - "https://cloudflare-dns.com/dns-query#Anthropic"
+      - "https://dns.google/dns-query#Anthropic"
+    "anthropic-com.ghost.io":
+      - "https://cloudflare-dns.com/dns-query#Anthropic"
+      - "https://dns.google/dns-query#Anthropic"
+    "+.statsigapi.net":
+      - "https://cloudflare-dns.com/dns-query#Anthropic"
+      - "https://dns.google/dns-query#Anthropic"
+    "+.intercom.io":
+      - "https://cloudflare-dns.com/dns-query#Anthropic"
+      - "https://dns.google/dns-query#Anthropic"
+    "+.intercomcdn.com":
+      - "https://cloudflare-dns.com/dns-query#Anthropic"
+      - "https://dns.google/dns-query#Anthropic"
+    "cdn.usefathom.com":
+      - "https://cloudflare-dns.com/dns-query#Anthropic"
+      - "https://dns.google/dns-query#Anthropic"
+
+# Recover hostnames when apps connect by real IP (VPN DNS, Tailscale DNS, DoH).
+sniffer:
+  enable: true
+  parse-pure-ip: true
+  override-destination: true
+  sniff:
+    HTTP:
+      ports: [80, 8080-8880]
+    TLS:
+      ports: [443, 8443]
+    QUIC:
+      ports: [443, 8443]
+  skip-domain:
+    - "+.push.apple.com"
+
+proxy-providers:
+  webshare-provider:
+    type: http
+    url: "https://YOUR_CLOUDFLARE_HOST/webshare.yaml?token=YOUR_ACCESS_TOKEN"
+    path: ./proxy_providers/webshare.yaml
+    interval: 3600
+    proxy: DIRECT
+    health-check:
+      enable: true
+      url: https://www.gstatic.com/generate_204
+      interval: 300
+
+proxy-groups:
+  - name: Proxy
+    type: select
+    use:
+      - webshare-provider
+  # Pin Claude (Anthropic) traffic to one exit IP here; it follows Proxy until you pick a node.
+  - name: Anthropic
+    type: select
+    proxies:
+      - Proxy
+    use:
+      - webshare-provider
+
+rules:
+  # HTTP nodes cannot carry QUIC/UDP; reject it for Claude so browsers use TCP.
+  - AND,((NETWORK,UDP),(GEOSITE,anthropic)),REJECT
+  - AND,((NETWORK,UDP),(DOMAIN,anthropic.com.cdn.cloudflare.net)),REJECT
+  - AND,((NETWORK,UDP),(DOMAIN,anthropic.auth0.com)),REJECT
+  - AND,((NETWORK,UDP),(DOMAIN,anthropic-com.ghost.io)),REJECT
+  - AND,((NETWORK,UDP),(DOMAIN-KEYWORD,datadog)),REJECT
+  - AND,((NETWORK,UDP),(DOMAIN-KEYWORD,sentry)),REJECT
+  - AND,((NETWORK,UDP),(DOMAIN-SUFFIX,statsigapi.net)),REJECT
+  - AND,((NETWORK,UDP),(DOMAIN-KEYWORD,sift)),REJECT
+  - AND,((NETWORK,UDP),(DOMAIN-SUFFIX,intercom.io)),REJECT
+  - AND,((NETWORK,UDP),(DOMAIN-SUFFIX,intercomcdn.com)),REJECT
+  - AND,((NETWORK,UDP),(DOMAIN,cdn.usefathom.com)),REJECT
+  - AND,((NETWORK,UDP),(IP-CIDR,160.79.104.0/21,no-resolve)),REJECT
+  - AND,((NETWORK,UDP),(IP-CIDR6,2607:6bc0::/32,no-resolve)),REJECT
+  - GEOSITE,openai,Proxy
+  - GEOSITE,anthropic,Anthropic
+  # Claude extras beyond GEOSITE,anthropic: CDN, login, fraud-check and
+  # telemetry hosts claude.ai loads, plus Anthropic's IP ranges (AS399358)
+  # for connections made by IP.
+  - DOMAIN,anthropic.com.cdn.cloudflare.net,Anthropic
+  - DOMAIN,anthropic.auth0.com,Anthropic
+  - DOMAIN,anthropic-com.ghost.io,Anthropic
+  - DOMAIN-KEYWORD,datadog,Anthropic
+  - DOMAIN-KEYWORD,sentry,Anthropic
+  - DOMAIN-SUFFIX,statsigapi.net,Anthropic
+  - DOMAIN-KEYWORD,sift,Anthropic
+  - DOMAIN-SUFFIX,intercom.io,Anthropic
+  - DOMAIN-SUFFIX,intercomcdn.com,Anthropic
+  - DOMAIN,cdn.usefathom.com,Anthropic
+  - IP-CIDR,160.79.104.0/21,Anthropic,no-resolve
+  - IP-CIDR6,2607:6bc0::/32,Anthropic,no-resolve
+  - GEOSITE,google-gemini,Proxy
+  # OPTIONAL (Apple Intelligence): proxy the ChatGPT relay used by Apple Intelligence.
+  # Its relay spans several CDNs; all hops must use the proxy. Keep these above MATCH
+  # and above any apple.com,DIRECT rule. (The hosted profile adds these with ?apple=1.)
+  # - DOMAIN-SUFFIX,guzzoni.apple.com,Proxy
+  # - DOMAIN-SUFFIX,smoot.apple.com,Proxy
+  # - DOMAIN-SUFFIX,apple-relay.apple.com,Proxy
+  # - DOMAIN-SUFFIX,gspe1-ssl.ls.apple.com,Proxy
+  # - DOMAIN-SUFFIX,apple-relay.akamaized.net,Proxy
+  # - DOMAIN-SUFFIX,apple-relay.mask.apple-dns.net,Proxy
+  # - DOMAIN-SUFFIX,apple-intelligence.apple.com,Proxy
+  # - DOMAIN-SUFFIX,ai.apple.com,Proxy
+  # - DOMAIN-SUFFIX,apple-relay.cloudflare.com,Proxy
+  # - DOMAIN-SUFFIX,apple-relay.fastly-edge.com,Proxy
+  # - DOMAIN-SUFFIX,cp4.cloudflare.com,Proxy
+  - MATCH,DIRECT

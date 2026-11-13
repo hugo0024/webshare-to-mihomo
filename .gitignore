@@ -1,0 +1,12 @@
+node_modules/
+.wrangler/
+dist/
+__pycache__/
+*.pyc
+
+# Local secrets. Copy .dev.vars.example to .dev.vars and fill it in.
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+!.dev.vars.example

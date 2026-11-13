@@ -1,0 +1,21 @@
+name = "webshare-mihomo"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+# Keep variables set in the Cloudflare dashboard when deploying from Git or the CLI.
+keep_vars = true
+
+# Secrets: set them in the Cloudflare dashboard (type "Secret") or with
+# `npx wrangler secret put NAME`. Never write their values in this file.
+#
+#   ACCESS_TOKEN      required   long random string; the ?token= in your URLs
+#   WEBSHARE_URL      TXT mode   your Webshare proxy-list download URL
+#   WEBSHARE_API_KEY  API mode   Webshare API key (country names + usage bar)
+#
+# Optional settings. All are off or default when unset. Set them as dashboard
+# variables, or uncomment them here. A NextDNS URL identifies your profile,
+# so prefer setting DNS_URL in the dashboard rather than committing it.
+#
+# [vars]
+# TAILSCALE = "true"            # leave the tailnet to the Tailscale app
+# APPLE_INTELLIGENCE = "true"   # proxy Apple Intelligence's ChatGPT relay
+# DNS_URL = "https://dns.nextdns.io/<profile-id>/<device-name>"

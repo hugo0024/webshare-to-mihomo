@@ -1,0 +1,16 @@
+# Local secrets for `npm run dev` (wrangler dev).
+# Copy this file to .dev.vars and fill in your values. .dev.vars is git-ignored.
+
+# Required: the ?token= value in your URLs. Use letters and digits only, e.g. `openssl rand -hex 32`.
+ACCESS_TOKEN=replace-with-a-long-random-token
+
+# TXT mode: your Webshare proxy-list download URL.
+WEBSHARE_URL=https://proxy.webshare.io/api/v2/proxy/list/download/REPLACE_ME/-/any/username/direct/-/
+
+# API mode (optional, overrides TXT mode): your Webshare API key.
+# WEBSHARE_API_KEY=
+
+# Optional features (see docs/optional-features.md).
+# TAILSCALE=true
+# APPLE_INTELLIGENCE=true
+# DNS_URL=https://dns.nextdns.io/<profile-id>/<device-name>

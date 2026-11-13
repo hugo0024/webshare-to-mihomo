@@ -1,0 +1,15 @@
+{
+  "name": "webshare-mihomo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "pages:build": "node -e \"require('fs').mkdirSync('public', { recursive: true })\"",
+    "pages:dev": "wrangler pages dev public",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "wrangler": "^4.14.0"
+  }
+}
