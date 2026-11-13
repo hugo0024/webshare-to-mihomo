@@ -9,7 +9,7 @@ about 15 minutes.
 4. [Get your own copy of this repo](#4-get-your-own-copy-of-this-repo)
 5. [Deploy to Cloudflare](#5-deploy-to-cloudflare): [CLI](#option-a-wrangler-cli), [dashboard + GitHub](#option-b-cloudflare-dashboard--github), or [Pages](#option-c-cloudflare-pages)
 6. [Test your URLs](#6-test-your-urls)
-7. [Import into Clash Verge](#7-import-into-clash-verge)
+7. [Set up your client](#7-set-up-your-client) (Clash Verge Rev on Windows/macOS, Stash on iOS)
 8. [Choose your servers](#8-choose-your-servers)
 9. [Optional features](#9-optional-features)
 10. [Updating, rotating the token, local development](#10-maintenance)
@@ -22,8 +22,8 @@ about 15 minutes.
 - A **Webshare** account with at least one proxy (free or paid plan). The profile
   uses Webshare's HTTP proxies with username/password authentication.
 - A free **Cloudflare** account. The app runs on the Workers free tier.
-- **Clash Verge Rev** (Windows, macOS, Linux) or any other client that uses
-  the Mihomo core.
+- A client app: **Clash Verge Rev** on Windows and macOS, **Stash** on iPhone
+  and iPad. Any other Mihomo-based client also works. See [clients.md](clients.md).
 - For the CLI route only: **Node.js 18 or newer** and **git**.
 
 ## 2. Get your Webshare credentials
@@ -224,69 +224,28 @@ proxies:
 
 If you get an error instead, see [Troubleshooting](#11-troubleshooting).
 
-## 7. Import into Clash Verge
+## 7. Set up your client
 
-1. Open **Profiles**, paste this URL in the box at the top, and click **Import**:
+Pick the app for your device and follow its guide in **[clients.md](clients.md)**:
 
-   ```text
-   https://YOUR_CLOUDFLARE_HOST/config.yaml?token=YOUR_ACCESS_TOKEN
-   ```
+| Platform | Recommended app |
+| --- | --- |
+| Windows | [Clash Verge Rev](clients.md#clash-verge-rev-windows) |
+| macOS | [Clash Verge Rev](clients.md#clash-verge-rev-macos) |
+| iPhone / iPad | [Stash](clients.md#stash-iphone-and-ipad) |
 
-   Add options to the URL to turn on [optional features](optional-features.md)
-   for this device, e.g. `...&tailscale=1`.
+Every app imports the same profile URL:
 
-2. Click the new profile to make it active.
-3. Turn on one of these in **Settings**:
-   - **System Proxy**: covers browsers and apps that respect the OS proxy
-     setting. Easiest to start with.
-   - **TUN Mode**: covers every app, including CLIs and apps that ignore the
-     system proxy. Clash Verge asks you to install its **Service Mode** first.
-
-The profile refreshes itself every 24 hours, and the server list every hour.
-To pick up changes right away, right-click the profile and choose **Update**.
-
-### Other Mihomo clients
-
-Any Mihomo-based client can import the same URL. For the bare `mihomo` binary:
-
-```sh
-mkdir -p ~/.config/mihomo
-curl -fsSL -o ~/.config/mihomo/config.yaml \
-  "https://YOUR_CLOUDFLARE_HOST/config.yaml?token=YOUR_ACCESS_TOKEN"
-mihomo -d ~/.config/mihomo
+```text
+https://YOUR_CLOUDFLARE_HOST/config.yaml?token=YOUR_ACCESS_TOKEN
 ```
 
-The profile disables the external controller (`external-controller: ''`), which
-Clash Verge doesn't need. To choose nodes from a web dashboard with the bare
-binary, set `external-controller: 127.0.0.1:9090` and a real `secret`.
-Otherwise each group uses its first node.
-
-Mihomo downloads its GeoSite database on first start. Rules such as
-`GEOSITE,openai` need it.
-
-### Using only the provider
-
-If you already have your own config, add only the server list:
-
-```yaml
-proxy-providers:
-  webshare-provider:
-    type: http
-    url: "https://YOUR_CLOUDFLARE_HOST/webshare.yaml?token=YOUR_ACCESS_TOKEN"
-    path: ./proxy_providers/webshare.yaml
-    interval: 3600
-    health-check:
-      enable: true
-      url: https://www.gstatic.com/generate_204
-      interval: 300
-```
-
-`config-example.yaml` is the full default profile as a static file, in case you
-want to edit it by hand.
+The clients guide also covers Linux, Android, the bare `mihomo` binary, and
+adding only the provider to a config of your own.
 
 ## 8. Choose your servers
 
-Open **Proxies** in Clash Verge. You will see two groups:
+Every client shows the same two groups:
 
 | Group | Carries | Default |
 | --- | --- | --- |
@@ -298,12 +257,8 @@ Open **Proxies** in Clash Verge. You will see two groups:
   then switch `Proxy` without moving Claude.
 
 There is no automatic switching. Nodes are named after their IP, so a node you
-pick keeps the same exit IP when the list refreshes.
-
-To check it works, open **Connections** in Clash Verge, visit `chatgpt.com` or
-`claude.ai`, and look at the rule and chain each connection used. Other sites go
-`DIRECT`, so a general "what is my IP" site still shows your real IP. That is
-expected.
+pick keeps the same exit IP when the list refreshes. Other sites go `DIRECT`,
+so a general "what is my IP" site still shows your real IP. That is expected.
 
 How the rules work and how to change them: [routing.md](routing.md).
 
@@ -379,3 +334,6 @@ your proxies change.
 | Claude loads, then shows a region error | Close all Claude tabs and connections, pin a node in `Anthropic`, and reopen the login page rather than reloading the error page. See [routing.md](routing.md#claude-udp-and-dns). |
 | Tailnet hosts stop working while TUN is on | Turn on the [Tailscale option](optional-features.md#tailscale). |
 | `*.workers.dev` doesn't load | Your network may block it. Add a [custom domain](#optional-custom-domain). |
+| Stash won't connect while Tailscale is on | iOS runs one VPN at a time. Disconnect Tailscale, or switch between the two. |
+| Clash Verge's **System Proxy** switch turns itself off (macOS) | macOS wants an admin password to change network settings. Turn off **Require an administrator password to access system-wide settings** in **System Settings → Privacy & Security → Advanced**. |
+| Clash Verge **Tun Mode** won't turn on | Install **Service Mode** (Settings → Service Mode) and approve the admin prompt. Some antivirus programs block it. See [clients.md](clients.md#3-turn-it-on). |

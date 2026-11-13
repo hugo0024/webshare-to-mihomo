@@ -30,6 +30,8 @@ your access token are stored as Cloudflare secrets, never in the code.
 
 - **Proxies only AI services** (OpenAI/ChatGPT, Anthropic/Claude, Google Gemini).
   Everything else goes `DIRECT`, which saves your Webshare bandwidth.
+- **One profile for every app:** Clash Verge Rev on Windows and macOS and Stash
+  on iOS all import the same URL.
 - **Two selector groups:** `Proxy` for ChatGPT and Gemini, and `Anthropic` for Claude.
   You pick the servers yourself, with no automatic switching. `Anthropic` follows
   `Proxy` until you pin it to one exit IP.
@@ -39,7 +41,7 @@ your access token are stored as Cloudflare secrets, never in the code.
   browsers fall back to TCP through the proxy), resolves Claude's domains through
   the proxy group, and sniffs hostnames from connections made by IP.
 - **Optional API mode:** with a Webshare API key, nodes are tagged by country
-  (`SG 45.86.1.23 🇸🇬`), dead proxies are dropped, and Clash Verge shows your
+  (`SG 45.86.1.23 🇸🇬`), dead proxies are dropped, and Clash Verge and Stash show your
   bandwidth usage and renewal date.
 
 ### Optional features (all off by default)
@@ -51,6 +53,19 @@ your access token are stored as Cloudflare secrets, never in the code.
 | Apple Intelligence | `?apple=1` or `APPLE_INTELLIGENCE=true` | Also proxies the relay that Apple Intelligence uses for ChatGPT |
 
 See [docs/optional-features.md](docs/optional-features.md).
+
+## Recommended clients
+
+| Platform | App |
+| --- | --- |
+| Windows | [Clash Verge Rev](https://github.com/clash-verge-rev/clash-verge-rev) (free) |
+| macOS | [Clash Verge Rev](https://github.com/clash-verge-rev/clash-verge-rev) (free) |
+| iPhone / iPad | [Stash](https://apps.apple.com/app/stash-rule-based-proxy/id1596063349) (paid) |
+
+All of them import the same `/config.yaml?token=…` URL.
+
+Step-by-step install and setup for each one, plus Linux, Android and the bare
+`mihomo` binary: **[docs/clients.md](docs/clients.md)**.
 
 ## Quick start
 
@@ -68,7 +83,7 @@ npx wrangler secret put WEBSHARE_URL       # paste your Webshare download URL
 npm run deploy                             # prints https://webshare-mihomo.<subdomain>.workers.dev
 ```
 
-Then import this URL into Clash Verge as a profile:
+Then import this URL as a profile in Clash Verge Rev or Stash:
 
 ```text
 https://webshare-mihomo.<subdomain>.workers.dev/config.yaml?token=<ACCESS_TOKEN>
@@ -96,9 +111,9 @@ Optional **variables** (type *Text* or *Secret*):
 | `APPLE_INTELLIGENCE` | `false` | Default for the Apple Intelligence option. |
 | `DNS_URL` | Cloudflare + Google DoH | One or more `https://`, `tls://` or `quic://` resolvers, separated by commas. |
 
-**Query parameters** on `/config.yaml` override the variables for that one profile:
-`tailscale=1|0` and `apple=1|0`. This lets each device import a different
-variant of the same deployment.
+**Query parameters** on `/config.yaml` override the variables for that one
+profile: `tailscale=1|0` and `apple=1|0`. For example, a laptop that runs
+Tailscale can import `…&tailscale=1` while your phone imports the plain URL.
 
 ## Repository layout
 
@@ -112,7 +127,7 @@ wrangler.toml                   # Worker config (no secrets)
 config-example.yaml             # the default profile as a static file, for hand-editing
 scripts/build_webshare_yaml.py  # optional offline converter (no Cloudflare needed)
 test/converter.test.js          # `npm test` (Node's built-in test runner, no dependencies)
-docs/                           # setup guide, optional features, routing details
+docs/                           # setup guide, client guides, optional features, routing
 ```
 
 ## Security notes

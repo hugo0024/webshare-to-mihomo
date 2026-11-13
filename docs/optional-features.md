@@ -6,7 +6,7 @@ settings, uses public DNS resolvers, and leaves Apple traffic alone.
 There are two ways to switch a feature on:
 
 - **Per profile:** add a query parameter to the URL you import, e.g.
-  `config.yaml?token=…&tailscale=1`. Each device can import its own variant.
+  `config.yaml?token=…&tailscale=1`. Each device can turn on what it needs.
 - **For every profile:** set a variable on the Worker (**Settings → Variables
   and Secrets**, or `[vars]` in `wrangler.toml`).
 
@@ -49,6 +49,10 @@ through Webshare. Any official Mihomo core works. You don't need
 
 If you only use **System Proxy** (no TUN), tailnet traffic never reaches Mihomo,
 and you don't need this option.
+
+**Stash / iPhone:** leave this off in the URL you import on the phone. iOS runs
+only one VPN at a time, so Stash and the Tailscale app can't be connected
+together.
 
 ### macOS: keep "Use Tailscale DNS" off
 
@@ -159,6 +163,10 @@ The rest of Apple's traffic (OS updates, iCloud, App Store) stays `DIRECT`,
 which matters on a bandwidth-limited Webshare plan. If you add your own
 `apple.com,DIRECT` rule, keep it **below** these. Otherwise the relay leaks
 direct.
+
+The option is mainly for Macs running Clash Verge Rev in TUN mode. On iPhone
+with Stash it is untested whether iOS sends Apple Intelligence traffic through
+a third-party VPN at all.
 
 The list lives in `APPLE_PROXY_DOMAINS` in `src/converter.js`.
 `config-example.yaml` has the same rules commented out.
